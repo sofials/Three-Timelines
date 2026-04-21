@@ -1,234 +1,202 @@
 /**
- * THREE TIMELINES — Main (no ES modules)
- * Self-contained: targets config + timeline logic + A-Frame components.
- * Compatible with A-Frame + MindAR loaded as global scripts.
+ * THREE TIMELINES — MindAR + Three.js (ES Module)
+ * Prototype: single target D1 (fotografia di famiglia)
+ * Overlay persists in world space when marker is lost.
  */
 
-// ─── TARGET CONFIG ────────────────────────────────────────────────────────────
+import * as THREE from 'three';
 
-const ZONE = { PAST: 'past', PRESENT: 'present', FUTURE: 'future' };
-const LAYER = { TIMELINE: 'timeline', FACTUAL: 'factual' };
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+
+// For the physical card test: compile ONLY your card photo → test_d1.mind
+// When ready for all 14: switch back to assets/markers/all_targets.mind
+const MIND_FILE = 'assets/markers/test_d1.mind';
+const DWELL_MS  = 1500;
 
 const TARGETS = [
-  // ZONA 1 — PASSATO
-  { id:'D1', targetIndex:0, label:'Fotografia di famiglia', zone:ZONE.PAST,    layer:LAYER.TIMELINE,
-    past:   { src:'assets/overlays/past/D1_past.png',    caption:'Alassio, agosto — 1971.' },
-    future: { src:'assets/overlays/future/D1_future.png', caption:'La stessa cornice, riparata.' } },
-
-  { id:'D2', targetIndex:1, label:'Calendario da muro', zone:ZONE.PAST,        layer:LAYER.TIMELINE,
-    past:   { src:'assets/overlays/past/D2_past.png',    caption:'Pranzo da mamma — domenica.' },
-    future: { src:'assets/overlays/future/D2_future.png', caption:null } },
-
-  { id:'D3', targetIndex:2, label:'Disegno di Carlo', zone:ZONE.PAST,          layer:LAYER.TIMELINE,
-    past:   { src:'assets/overlays/past/D3_past.png',    caption:null },
-    future: { src:'assets/overlays/future/D3_future.png', caption:'Carlo, pompiere — 1989.' } },
-
-  // ZONA 2 — PRESENTE (dwell non fa nulla; overlay solo via ghiera)
-  { id:'D5', targetIndex:3, label:'Post-it 115', zone:ZONE.PRESENT,            layer:LAYER.TIMELINE,
-    past:   { src:'assets/overlays/past/D5_past.png',    caption:null },
-    future: { src:'assets/overlays/future/D5_future.png', caption:null } },
-
-  { id:'D6', targetIndex:4, label:'Diario del padre', zone:ZONE.PRESENT,       layer:LAYER.TIMELINE,
-    past:   { src:'assets/overlays/past/D6_past.png',    caption:'La casa è troppo piccola. Ma è nostra.' },
-    future: { src:'assets/overlays/future/D6_future.png', caption:null } },
-
-  // ZONA 3 — FUTURO
-  { id:'D7', targetIndex:5, label:'Libro dei mestieri', zone:ZONE.FUTURE,      layer:LAYER.TIMELINE,
-    past:   { src:'assets/overlays/past/D7_past.png',    caption:null },
-    future: { src:'assets/overlays/future/D7_future.png', caption:null } },
-
-  { id:'D8', targetIndex:6, label:'Vaso di terracotta', zone:ZONE.FUTURE,      layer:LAYER.TIMELINE,
-    past:   { src:'assets/overlays/past/D8_past.png',    caption:null },
-    future: { src:'assets/overlays/future/D8_future.png', caption:null } },
-
-  // ATTREZZATURA POMPIERI — fattuale
-  { id:'F1', targetIndex:7,  layer:LAYER.FACTUAL,
-    factual:{ src:'assets/overlays/factual/F1_helmet.png', title:'Elmetto da pompiere',
-              body:'Cromwell MK3 · 1968 · acciaio verniciato' } },
-  { id:'F2', targetIndex:8,  layer:LAYER.FACTUAL,
-    factual:{ src:'assets/overlays/factual/F2_axe.png',    title:'Ascia da pompiere',
-              body:'Sfondamento · 1972 · acciaio e frassino' } },
-  { id:'F3', targetIndex:9,  layer:LAYER.FACTUAL,
-    factual:{ src:'assets/overlays/factual/F3_jacket.png', title:'Giubba protettiva',
-              body:'VVF · 1975 · lana trattata' } },
-
-  // INFO CAMION — fattuale
-  { id:'T1', targetIndex:10, layer:LAYER.FACTUAL,
-    factual:{ src:null, title:'Camion 1', body:'[TBD — dati archivio Fondazione]' } },
-  { id:'T2', targetIndex:11, layer:LAYER.FACTUAL,
-    factual:{ src:null, title:'Camion 2', body:'[TBD — dati archivio Fondazione]' } },
-  { id:'T3', targetIndex:12, layer:LAYER.FACTUAL,
-    factual:{ src:null, title:'Camion 3', body:'[TBD — dati archivio Fondazione]' } },
-
-  // GROUND TRIGGER
-  { id:'G1', targetIndex:13, zone:ZONE.FUTURE, layer:LAYER.TIMELINE,
-    past:   { src:null, caption:null },
-    future: { src:'assets/overlays/future/G1_sprout.png', caption:null } },
+  {
+    targetIndex: 0,
+    id: 'D1',
+    zone: 'past',
+    past:   { src: 'assets/overlays/past/D1_past.png',     caption: 'Alassio, agosto — 1971.' },
+    future: { src: 'assets/overlays/future/D1_future.png', caption: 'La stessa cornice, riparata.' },
+  },
 ];
-
-const TARGETS_BY_INDEX = {};
-TARGETS.forEach(t => { TARGETS_BY_INDEX[t.targetIndex] = t; });
 
 // ─── TIMELINE STATE ───────────────────────────────────────────────────────────
 
-let dialOverride = null; // null | 'past' | 'future'
+let dialOverride = null;
 
-function getActiveTimeline(target) {
-  if (target.layer === LAYER.FACTUAL) return 'factual';
+function getTimeline(target) {
   if (dialOverride) return dialOverride;
-  switch (target.zone) {
-    case ZONE.PAST:    return 'past';
-    case ZONE.PRESENT: return 'present';
-    case ZONE.FUTURE:  return 'future';
-    default:           return 'present';
-  }
+  return target.zone;
 }
 
-function setDial(value) {
-  dialOverride = value;
-  updateDialLabel(value === 'past' ? '◂ PASSATO' : value === 'future' ? 'FUTURO ▸' : '○');
-  // Notify all active target components
-  document.querySelectorAll('[timeline-target]').forEach(el => {
-    if (el.components && el.components['timeline-target']) {
-      el.components['timeline-target'].refresh();
-    }
+// ─── BOOT ─────────────────────────────────────────────────────────────────────
+
+window.addEventListener('load', async () => {
+
+  const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+    container: document.body,
+    imageTargetSrc: MIND_FILE,
+    maxTrack: 1,
+    filterMinCF: 0.001,
+    filterBeta: 1000,
+    missTolerance: 5,
+    warmupTolerance: 5,
   });
-}
 
-// ─── A-FRAME COMPONENT ────────────────────────────────────────────────────────
+  const { renderer, scene, camera } = mindarThree;
+  scene.add(new THREE.AmbientLight(0xffffff, 1.0));
 
-AFRAME.registerComponent('timeline-target', {
-  schema: { targetIndex: { type: 'int', default: 0 } },
+  const textureLoader = new THREE.TextureLoader();
+  const worldMeshes   = new Map();
+  const states        = [];
 
-  init() {
-    this.target     = TARGETS_BY_INDEX[this.data.targetIndex];
-    this.dwellTimer = null;
-    this.isFound    = false;
-    this.overlayEl  = null;
-    this.pulseEl    = null;
-    this.captionEl  = null;
+  for (const target of TARGETS) {
+    const anchor   = mindarThree.addAnchor(target.targetIndex);
+    const geometry = new THREE.PlaneGeometry(1, 0.75);
+    const material = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.position.set(0, 0.3, 0);
+    mesh.visible = false;
+    anchor.group.add(mesh);
 
-    if (!this.target) return;
+    const state = { anchor, mesh, target, dwellTimer: null, isRevealed: false,
+                    lastMatrix: null, currentSrc: null };
+    states.push(state);
 
-    this._buildOverlay();
-    this._buildPulse();
+    anchor.onTargetFound = () => {
+      debug(`Found: ${target.id} · ${target.zone}`);
+      // Update last known world matrix every frame while visible
+      state.lastMatrix = anchor.group.matrixWorld.clone();
 
-    this.el.addEventListener('targetFound', () => this._onFound());
-    this.el.addEventListener('targetLost',  () => this._onLost());
-    this.overlayEl.addEventListener('click', () => this._onTap());
-  },
+      if (state.isRevealed) {
+        removeWorldMesh(state);
+        anchor.group.add(mesh);
+        mesh.visible = true;
+      } else {
+        startDwell(state);
+      }
+    };
 
-  remove() { this._clearDwell(); },
+    anchor.onTargetLost = () => {
+      debug('');
+      clearDwell(state);
+      if (state.isRevealed) persistInWorld(state);
+    };
+  }
 
-  refresh() { if (this.isFound) this._reveal(); },
+  // Tap anywhere on screen to reveal immediately
+  renderer.domElement.addEventListener('click', () => {
+    const active = states.find(s => s.anchor.group.visible && !s.isRevealed);
+    if (active) { clearDwell(active); reveal(active); }
+  });
 
-  _onFound() {
-    this.isFound = true;
-    this.pulseEl.setAttribute('visible', true);
-    this._startDwell();
-    // Debug: show which targetIndex was detected
-    const dbg = document.getElementById('debug-label');
-    if (dbg && this.target) {
-      dbg.textContent = `Target: ${this.data.targetIndex} (${this.target.id}) → zona: ${this.target.zone || 'fattuale'}`;
-      dbg.style.display = 'block';
-    }
-  },
+  await mindarThree.start();
 
-  _onLost() {
-    this.isFound = false;
-    this.pulseEl.setAttribute('visible', false);
-    this._clearDwell();
-    this._hide();
-    const dbg = document.getElementById('debug-label');
-    if (dbg) dbg.style.display = 'none';
-  },
+  renderer.setAnimationLoop(() => {
+    // Keep lastMatrix fresh while marker is tracked
+    states.forEach(s => {
+      if (s.anchor.group.visible) {
+        s.lastMatrix = s.anchor.group.matrixWorld.clone();
+      }
+    });
+    renderer.render(scene, camera);
+  });
 
-  _startDwell() {
-    this._clearDwell();
-    this.dwellTimer = setTimeout(() => this._reveal(), 2000);
-  },
+  // Hide loading screen
+  const lo = document.getElementById('loading-overlay');
+  if (lo) { lo.style.opacity = '0'; setTimeout(() => lo.remove(), 600); }
 
-  _clearDwell() {
-    if (this.dwellTimer) { clearTimeout(this.dwellTimer); this.dwellTimer = null; }
-  },
+  // ── Dwell ──────────────────────────────────────────────────────────────────
 
-  _onTap() { this._clearDwell(); this._reveal(); },
+  function startDwell(state) {
+    clearDwell(state);
+    state.dwellTimer = setTimeout(() => reveal(state), DWELL_MS);
+  }
 
-  _reveal() {
-    const tl = getActiveTimeline(this.target);
-    if (tl === 'present') { this._hide(); return; }
+  function clearDwell(state) {
+    if (state.dwellTimer) { clearTimeout(state.dwellTimer); state.dwellTimer = null; }
+  }
 
-    const content = tl === 'factual' ? this.target.factual : this.target[tl];
-    if (!content) { this._hide(); return; }
+  // ── Reveal ─────────────────────────────────────────────────────────────────
 
-    // Set texture
-    if (content.src) {
-      this.overlayEl.setAttribute('material', `src: url(${content.src}); transparent: true; opacity: 0.95; shader: flat`);
+  function reveal(state) {
+    const tl = getTimeline(state.target);
+    if (tl === 'present') return;
+
+    const content = state.target[tl];
+    if (!content?.src) return;
+
+    if (state.currentSrc !== content.src) {
+      state.currentSrc = content.src;
+      textureLoader.load(
+        content.src,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          state.mesh.material.map     = tex;
+          state.mesh.material.opacity = 0.95;
+          state.mesh.material.needsUpdate = true;
+        },
+        undefined,
+        (err) => debug(`Texture error: ${err}`)
+      );
     } else {
-      // Fallback coloured plane
-      const colors = { past:'#1a2a18', future:'#2a1f10', factual:'#101820' };
-      this.overlayEl.setAttribute('material', `color: ${colors[tl] || '#222'}; opacity: 0.9`);
+      state.mesh.material.opacity = 0.95;
+      state.mesh.material.needsUpdate = true;
     }
 
-    // Caption
-    const text = content.caption || content.title || null;
-    if (text && this.captionEl) {
-      this.captionEl.setAttribute('value', text);
-      this.captionEl.setAttribute('visible', true);
-    } else if (this.captionEl) {
-      this.captionEl.setAttribute('visible', false);
-    }
+    state.mesh.visible = true;
+    state.isRevealed   = true;
+    debug(`Revealed: ${state.target.id} · ${tl}`);
+  }
 
-    this.overlayEl.setAttribute('visible', true);
-  },
+  // ── Persist in world space ─────────────────────────────────────────────────
 
-  _hide() {
-    this.overlayEl.setAttribute('visible', false);
-    if (this.captionEl) this.captionEl.setAttribute('visible', false);
-  },
+  function persistInWorld(state) {
+    if (!state.lastMatrix) return;
+    removeWorldMesh(state);
 
-  _buildOverlay() {
-    const el = document.createElement('a-plane');
-    el.setAttribute('position', '0 0.05 0.01');
-    el.setAttribute('width', '1');
-    el.setAttribute('height', '0.75');
-    el.setAttribute('material', 'transparent: true; opacity: 0');
-    el.setAttribute('visible', false);
-    el.setAttribute('class', 'clickable');
-    this.el.appendChild(el);
-    this.overlayEl = el;
+    const wm = new THREE.Mesh(
+      state.mesh.geometry,
+      state.mesh.material.clone()
+    );
 
-    // Caption text below overlay
-    const cap = document.createElement('a-text');
-    cap.setAttribute('position', '0 -0.44 0.02');
-    cap.setAttribute('align', 'center');
-    cap.setAttribute('width', '0.9');
-    cap.setAttribute('color', '#F5F0E6');
-    cap.setAttribute('visible', false);
-    cap.setAttribute('value', '');
-    this.el.appendChild(cap);
-    this.captionEl = cap;
-  },
+    // World position = anchor world matrix × local offset
+    const offset   = new THREE.Vector3(0, 0.3, 0);
+    const worldPos = offset.applyMatrix4(state.lastMatrix);
+    wm.position.copy(worldPos);
 
-  _buildPulse() {
-    const el = document.createElement('a-ring');
-    el.setAttribute('position', '0 0 0.005');
-    el.setAttribute('radius-inner', '0.06');
-    el.setAttribute('radius-outer', '0.10');
-    el.setAttribute('color', '#C2D3A9');
-    el.setAttribute('material', 'transparent: true; opacity: 0.35');
-    el.setAttribute('visible', false);
-    el.setAttribute('animation', 'property: material.opacity; from: 0.15; to: 0.55; dur: 1200; dir: alternate; loop: true; easing: easeInOutSine');
-    this.el.appendChild(el);
-    this.pulseEl = el;
-  },
+    // Copy orientation from anchor
+    const worldQuat = new THREE.Quaternion();
+    state.lastMatrix.decompose(new THREE.Vector3(), worldQuat, new THREE.Vector3());
+    wm.quaternion.copy(worldQuat);
+
+    wm.visible = true;
+    scene.add(wm);
+    worldMeshes.set(state, wm);
+
+    state.mesh.visible = false;
+  }
+
+  function removeWorldMesh(state) {
+    const wm = worldMeshes.get(state);
+    if (wm) { scene.remove(wm); worldMeshes.delete(state); }
+  }
+
 });
 
 // ─── DIAL ─────────────────────────────────────────────────────────────────────
 
-function updateDialLabel(text) {
+function setDial(value) {
+  dialOverride = value;
   const el = document.getElementById('dial-label');
-  if (el) el.textContent = text;
+  if (el) el.textContent = value === 'past' ? '◂ PASSATO' : value === 'future' ? 'FUTURO ▸' : '○';
 }
 
 function initDial() {
@@ -237,33 +205,35 @@ function initDial() {
   let startAngle = null;
 
   function angle(e) {
-    const r  = dial.getBoundingClientRect();
+    const r = dial.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const t  = e.touches ? e.touches[0] : e;
+    const t = e.touches ? e.touches[0] : e;
     return Math.atan2(t.clientY - cy, t.clientX - cx) * 180 / Math.PI;
   }
-
-  function start(e) { startAngle = angle(e); }
-  function move(e) {
+  const start = e => { startAngle = angle(e); };
+  const move  = e => {
     if (startAngle === null) return;
     const d = angle(e) - startAngle;
     const knob = document.getElementById('dial-knob');
     if (knob) knob.style.transform = `rotate(${d}deg)`;
-    if (d < -20)      setDial('past');
-    else if (d > 20)  setDial('future');
-    else              setDial(null);
-  }
-  function end() {
+    if (d < -20) setDial('past');
+    else if (d > 20) setDial('future');
+    else setDial(null);
+  };
+  const end = () => {
     startAngle = null;
     const knob = document.getElementById('dial-knob');
-    if (knob) { knob.style.transition = 'transform 0.3s ease'; knob.style.transform = 'rotate(0deg)'; }
-    setTimeout(() => { if (knob) knob.style.transition = ''; }, 300);
-  }
+    if (knob) {
+      knob.style.transition = 'transform 0.3s ease';
+      knob.style.transform  = 'rotate(0deg)';
+      setTimeout(() => { knob.style.transition = ''; }, 300);
+    }
+  };
 
-  dial.addEventListener('touchstart',  start, { passive: true });
-  dial.addEventListener('touchmove',   move,  { passive: true });
-  dial.addEventListener('touchend',    end);
-  dial.addEventListener('mousedown',   start);
+  dial.addEventListener('touchstart',    start, { passive: true });
+  dial.addEventListener('touchmove',     move,  { passive: true });
+  dial.addEventListener('touchend',      end);
+  dial.addEventListener('mousedown',     start);
   document.addEventListener('mousemove', move);
   document.addEventListener('mouseup',   end);
 }
@@ -276,28 +246,28 @@ function initSwipe() {
   document.addEventListener('touchend', e => {
     if (startX === null) return;
     const dx = e.changedTouches[0].clientX - startX;
-    if (dx < -60)      setDial('past');
-    else if (dx > 60)  setDial('future');
+    if (dx < -60) setDial('past');
+    else if (dx > 60) setDial('future');
     startX = null;
   });
 }
 
-// ─── BOOT ─────────────────────────────────────────────────────────────────────
+// ─── DEBUG ────────────────────────────────────────────────────────────────────
+
+function debug(msg) {
+  const el = document.getElementById('debug-label');
+  if (!el) return;
+  if (msg) { el.textContent = msg; el.style.display = 'block'; }
+  else el.style.display = 'none';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
   initDial();
   initSwipe();
-
-  document.getElementById('help-btn').addEventListener('click', () =>
+  document.getElementById('help-btn').addEventListener('click',  () =>
     document.getElementById('help-modal').classList.remove('hidden'));
   document.getElementById('help-close').addEventListener('click', () =>
     document.getElementById('help-modal').classList.add('hidden'));
-
-  const scene = document.querySelector('a-scene');
-  if (scene) {
-    scene.addEventListener('loaded', () => {
-      const o = document.getElementById('loading-overlay');
-      if (o) { o.style.opacity = '0'; setTimeout(() => o.remove(), 600); }
-    });
-  }
 });

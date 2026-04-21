@@ -6,81 +6,15 @@
   <meta name="theme-color" content="#303030" />
   <title>Tre Linee Temporali — Museo Marazzato</title>
   <link rel="manifest" href="manifest.json" />
-  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-  <!-- main.js must load BEFORE a-scene is parsed, so components are registered -->
-  <script src="js/main.js"></script>
   <link rel="stylesheet" href="css/ui.css" />
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+  </style>
 </head>
 <body>
 
-<a-scene
-  mindar-image="
-    imageTargetSrc: assets/markers/all_targets.mind;
-    maxTrack: 3;
-    filterMinCF: 0.001;
-    filterBeta: 1000;
-    missTolerance: 5;
-    warmupTolerance: 5;
-  "
-  color-space="sRGB"
-  renderer="colorManagement: true;"
-  vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false"
-  loading-screen="backgroundColor: #303030; dotsColor: #C2D3A9;"
->
-  <a-assets timeout="10000">
-    <img id="D1-past"    src="assets/overlays/past/D1_past.png"     crossorigin="anonymous" />
-    <img id="D2-past"    src="assets/overlays/past/D2_past.png"     crossorigin="anonymous" />
-    <img id="D3-past"    src="assets/overlays/past/D3_past.png"     crossorigin="anonymous" />
-    <img id="D5-past"    src="assets/overlays/past/D5_past.png"     crossorigin="anonymous" />
-    <img id="D6-past"    src="assets/overlays/past/D6_past.png"     crossorigin="anonymous" />
-    <img id="D7-past"    src="assets/overlays/past/D7_past.png"     crossorigin="anonymous" />
-    <img id="D8-past"    src="assets/overlays/past/D8_past.png"     crossorigin="anonymous" />
-    <img id="D1-future"  src="assets/overlays/future/D1_future.png" crossorigin="anonymous" />
-    <img id="D2-future"  src="assets/overlays/future/D2_future.png" crossorigin="anonymous" />
-    <img id="D3-future"  src="assets/overlays/future/D3_future.png" crossorigin="anonymous" />
-    <img id="D5-future"  src="assets/overlays/future/D5_future.png" crossorigin="anonymous" />
-    <img id="D6-future"  src="assets/overlays/future/D6_future.png" crossorigin="anonymous" />
-    <img id="D7-future"  src="assets/overlays/future/D7_future.png" crossorigin="anonymous" />
-    <img id="D8-future"  src="assets/overlays/future/D8_future.png" crossorigin="anonymous" />
-    <img id="G1-sprout"  src="assets/overlays/future/G1_sprout.png" crossorigin="anonymous" />
-    <img id="F1-factual" src="assets/overlays/factual/F1_helmet.png" crossorigin="anonymous" />
-    <img id="F2-factual" src="assets/overlays/factual/F2_axe.png"   crossorigin="anonymous" />
-    <img id="F3-factual" src="assets/overlays/factual/F3_jacket.png" crossorigin="anonymous" />
-  </a-assets>
+<!-- ─── UI overlay ─────────────────────────────────────────────────────── -->
 
-  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-  <!-- ZONA 1 — PASSATO -->
-  <a-entity mindar-image-target="targetIndex: 0"  timeline-target="targetIndex: 0"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 1"  timeline-target="targetIndex: 1"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 2"  timeline-target="targetIndex: 2"></a-entity>
-
-  <!-- ZONA 2 — PRESENTE -->
-  <a-entity mindar-image-target="targetIndex: 3"  timeline-target="targetIndex: 3"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 4"  timeline-target="targetIndex: 4"></a-entity>
-
-  <!-- ZONA 3 — FUTURO -->
-  <a-entity mindar-image-target="targetIndex: 5"  timeline-target="targetIndex: 5"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 6"  timeline-target="targetIndex: 6"></a-entity>
-
-  <!-- POMPIERI — fattuale -->
-  <a-entity mindar-image-target="targetIndex: 7"  timeline-target="targetIndex: 7"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 8"  timeline-target="targetIndex: 8"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 9"  timeline-target="targetIndex: 9"></a-entity>
-
-  <!-- CAMION — fattuale -->
-  <a-entity mindar-image-target="targetIndex: 10" timeline-target="targetIndex: 10"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 11" timeline-target="targetIndex: 11"></a-entity>
-  <a-entity mindar-image-target="targetIndex: 12" timeline-target="targetIndex: 12"></a-entity>
-
-  <!-- GROUND TRIGGER -->
-  <a-entity mindar-image-target="targetIndex: 13" timeline-target="targetIndex: 13"></a-entity>
-
-</a-scene>
-
-<!-- UI -->
 <div id="loading-overlay">
   <div class="loading-inner">
     <div class="loading-logo">M</div>
@@ -93,12 +27,8 @@
   <button id="help-btn" aria-label="Aiuto">?</button>
 </div>
 
-<!-- Debug label — remove before final deploy -->
-<div id="debug-label" style="display:none; position:fixed; top:54px; left:0; right:0;
-  background:rgba(199,42,9,0.85); color:#fff; font-family:monospace; font-size:14px;
-  text-align:center; padding:6px; z-index:99;"></div>
-
-<div id="dial-wrap">  <div id="dial" aria-label="Ghiera timeline">
+<div id="dial-wrap">
+  <div id="dial" aria-label="Ghiera timeline">
     <div id="dial-knob"></div>
   </div>
   <span id="dial-label">○</span>
@@ -109,14 +39,30 @@
     <button id="help-close" aria-label="Chiudi">✕</button>
     <h2>Come funziona</h2>
     <p>Punta il telefono verso gli oggetti sui plinti.<br>
-       Quando un oggetto pulsa, fermati a guardarlo 2 secondi — o toccalo.</p>
-    <p>La timeline cambia mentre avanzi nella sala:<br>
-       <strong>Passato</strong> vicino all'ingresso · <strong>Futuro</strong> vicino all'uscita.</p>
-    <p>Ruota la ghiera o scorri orizzontalmente per cambiare timeline.<br>
-       Scorri a sinistra → Passato · Scorri a destra → Futuro</p>
-    <p>Cerca la crepa sul pavimento vicino all'uscita.</p>
+       Toccalo per rivelare la timeline.</p>
+    <p><strong>Passato</strong> vicino all'ingresso · <strong>Futuro</strong> vicino all'uscita.</p>
+    <p>Ruota la ghiera o scorri orizzontalmente.<br>
+       Sinistra → Passato · Destra → Futuro</p>
   </div>
 </div>
 
+<div id="debug-label" style="display:none; position:fixed; top:54px; left:0; right:0;
+  background:rgba(199,42,9,0.88); color:#fff; font-family:monospace; font-size:13px;
+  text-align:center; padding:5px; z-index:99;"></div>
+
+<!-- ES Module import map — tells browser where to find three -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<!-- MindAR Three.js — must load as regular script before the module -->
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-three.prod.js"></script>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
