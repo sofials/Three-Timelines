@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#303030" />
+  <title>Tre Linee Temporali — Museo Marazzato</title>
+  <link rel="manifest" href="manifest.json" />
+  <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <link rel="stylesheet" href="css/ui.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     A-FRAME SCENE
+     imageTargetSrc: single compiled .mind file — all 14 markers.
+     Order MUST match targetIndex in targets.js:
+       0=D1, 1=D2, 2=D3, 3=D5, 4=D6, 5=D7, 6=D8
+       7=F1, 8=F2, 9=F3, 10=T1, 11=T2, 12=T3, 13=G1
+═══════════════════════════════════════════════════════════════════════ -->
+
+<a-scene
+  mindar-image="
+    imageTargetSrc: assets/markers/all_targets.mind;
+    maxTrack: 3;
+    filterMinCF: 0.001;
+    filterBeta: 1000;
+    missTolerance: 5;
+    warmupTolerance: 5;
+  "
+  color-space="sRGB"
+  renderer="colorManagement: true; logarithmicDepthBuffer: true;"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false"
+  loading-screen="backgroundColor: #303030; dotsColor: #C2D3A9;"
+>
+  <a-assets>
+    <!-- Past overlays -->
+    <img id="D1-past"    src="assets/overlays/past/D1_past.png"    crossorigin="anonymous" />
+    <img id="D2-past"    src="assets/overlays/past/D2_past.png"    crossorigin="anonymous" />
+    <img id="D3-past"    src="assets/overlays/past/D3_past.png"    crossorigin="anonymous" />
+    <img id="D5-past"    src="assets/overlays/past/D5_past.png"    crossorigin="anonymous" />
+    <img id="D6-past"    src="assets/overlays/past/D6_past.png"    crossorigin="anonymous" />
+    <img id="D7-past"    src="assets/overlays/past/D7_past.png"    crossorigin="anonymous" />
+    <img id="D8-past"    src="assets/overlays/past/D8_past.png"    crossorigin="anonymous" />
+    <!-- Future overlays -->
+    <img id="D1-future"  src="assets/overlays/future/D1_future.png" crossorigin="anonymous" />
+    <img id="D2-future"  src="assets/overlays/future/D2_future.png" crossorigin="anonymous" />
+    <img id="D3-future"  src="assets/overlays/future/D3_future.png" crossorigin="anonymous" />
+    <img id="D5-future"  src="assets/overlays/future/D5_future.png" crossorigin="anonymous" />
+    <img id="D6-future"  src="assets/overlays/future/D6_future.png" crossorigin="anonymous" />
+    <img id="D7-future"  src="assets/overlays/future/D7_future.png" crossorigin="anonymous" />
+    <img id="D8-future"  src="assets/overlays/future/D8_future.png" crossorigin="anonymous" />
+    <!-- Factual overlays -->
+    <img id="F1-factual" src="assets/overlays/factual/F1_helmet.png" crossorigin="anonymous" />
+    <img id="F2-factual" src="assets/overlays/factual/F2_axe.png"    crossorigin="anonymous" />
+    <img id="F3-factual" src="assets/overlays/factual/F3_jacket.png" crossorigin="anonymous" />
+    <!-- Sprout -->
+    <img id="G1-sprout"  src="assets/overlays/future/G1_sprout.png"  crossorigin="anonymous" />
+  </a-assets>
+
+  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+  <!-- ZONA 1 — PASSATO -->
+  <a-entity mindar-image-target="targetIndex: 0"  timeline-target="targetIndex: 0"></a-entity>  <!-- D1 fotografia -->
+  <a-entity mindar-image-target="targetIndex: 1"  timeline-target="targetIndex: 1"></a-entity>  <!-- D2 calendario -->
+  <a-entity mindar-image-target="targetIndex: 2"  timeline-target="targetIndex: 2"></a-entity>  <!-- D3 disegno Carlo -->
+
+  <!-- ZONA 2 — PRESENTE -->
+  <a-entity mindar-image-target="targetIndex: 3"  timeline-target="targetIndex: 3"></a-entity>  <!-- D5 post-it 115 -->
+  <a-entity mindar-image-target="targetIndex: 4"  timeline-target="targetIndex: 4"></a-entity>  <!-- D6 diario -->
+
+  <!-- ZONA 3 — FUTURO -->
+  <a-entity mindar-image-target="targetIndex: 5"  timeline-target="targetIndex: 5"></a-entity>  <!-- D7 libro mestieri -->
+  <a-entity mindar-image-target="targetIndex: 6"  timeline-target="targetIndex: 6"></a-entity>  <!-- D8 vaso terracotta -->
+
+  <!-- ATTREZZATURA POMPIERI — layer fattuale -->
+  <a-entity mindar-image-target="targetIndex: 7"  timeline-target="targetIndex: 7"></a-entity>  <!-- F1 elmetto -->
+  <a-entity mindar-image-target="targetIndex: 8"  timeline-target="targetIndex: 8"></a-entity>  <!-- F2 ascia -->
+  <a-entity mindar-image-target="targetIndex: 9"  timeline-target="targetIndex: 9"></a-entity>  <!-- F3 giubba -->
+
+  <!-- INFO CAMION — layer fattuale -->
+  <a-entity mindar-image-target="targetIndex: 10" timeline-target="targetIndex: 10"></a-entity> <!-- T1 camion 1 -->
+  <a-entity mindar-image-target="targetIndex: 11" timeline-target="targetIndex: 11"></a-entity> <!-- T2 camion 2 -->
+  <a-entity mindar-image-target="targetIndex: 12" timeline-target="targetIndex: 12"></a-entity> <!-- T3 camion 3 -->
+
+  <!-- GROUND TRIGGER -->
+  <a-entity mindar-image-target="targetIndex: 13" timeline-target="targetIndex: 13"></a-entity> <!-- G1 germoglio -->
+
+</a-scene>
+
+<!-- ─── HTML UI overlay ─────────────────────────────────────────────────── -->
+
+<div id="loading-overlay">
+  <div class="loading-inner">
+    <div class="loading-logo">M</div>
+    <p class="loading-text">Caricamento…</p>
+  </div>
+</div>
+
+<div id="topbar">
+  <span class="topbar-title">Tre Linee Temporali</span>
+  <button id="help-btn" aria-label="Aiuto">?</button>
+</div>
+
+<div id="dial-wrap">
+  <div id="dial" aria-label="Ghiera timeline">
+    <div id="dial-knob"></div>
+  </div>
+  <span id="dial-label">○</span>
+</div>
+
+<div id="ground-prompt" class="hidden">
+  <span>↓ Guarda in basso</span>
+</div>
+
+<div id="help-modal" class="hidden" role="dialog" aria-modal="true">
+  <div class="modal-inner">
+    <button id="help-close" aria-label="Chiudi">✕</button>
+    <h2>Come funziona</h2>
+    <p>Punta il telefono verso gli oggetti sui plinti.<br>
+       Quando un oggetto pulsa, fermati a guardarlo 2 secondi — o toccalo.</p>
+    <p>La timeline cambia mentre avanzi nella sala:<br>
+       <strong>Passato</strong> vicino all'ingresso · <strong>Futuro</strong> vicino all'uscita.</p>
+    <p>Ruota la ghiera in basso per cambiare timeline.<br>
+       Scorri a sinistra → Passato &nbsp;·&nbsp; Scorri a destra → Futuro</p>
+    <p>Cerca la crepa sul pavimento vicino all'uscita.</p>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+<script>
+  document.getElementById('help-btn').addEventListener('click', () =>
+    document.getElementById('help-modal').classList.remove('hidden'));
+  document.getElementById('help-close').addEventListener('click', () =>
+    document.getElementById('help-modal').classList.add('hidden'));
+  document.querySelector('a-scene').addEventListener('loaded', () => {
+    const o = document.getElementById('loading-overlay');
+    o.style.opacity = '0';
+    setTimeout(() => o.remove(), 600);
+  });
+</script>
+</body>
+</html>

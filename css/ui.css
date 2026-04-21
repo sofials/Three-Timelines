@@ -1,0 +1,204 @@
+/* THREE TIMELINES — UI Stylesheet
+   Brand palette: Tea Green #C2D3A9 · Graphite #303030 · Rosso Corsa #C72A09 · Cream #F5F0E6
+   Typography: Barlow Condensed 700 (display) + system serif (body fallback)
+*/
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Source+Serif+4:ital,wght@0,400;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --tea-green:   #C2D3A9;
+  --graphite:    #303030;
+  --rosso-corsa: #C72A09;
+  --cream:       #F5F0E6;
+  --font-display: 'Barlow Condensed', condensed, sans-serif;
+  --font-body:    'Source Serif 4', Georgia, serif;
+}
+
+body {
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--font-body);
+  color: var(--cream);
+  touch-action: none;
+}
+
+/* ── Loading overlay ─────────────────────────────────────────────────────── */
+#loading-overlay {
+  position: fixed; inset: 0;
+  background: var(--graphite);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100;
+  transition: opacity 0.6s ease;
+}
+.loading-inner { text-align: center; }
+.loading-logo {
+  font-family: var(--font-display);
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--tea-green);
+  letter-spacing: 0.05em;
+  margin-bottom: 1rem;
+}
+.loading-text {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: 0.6;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+#topbar {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  background: linear-gradient(to bottom, rgba(48,48,48,0.85) 0%, transparent 100%);
+  z-index: 20;
+}
+.topbar-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cream);
+  opacity: 0.9;
+}
+#help-btn {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(194,211,169,0.5);
+  background: rgba(48,48,48,0.6);
+  color: var(--tea-green);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.2s, background 0.2s;
+}
+#help-btn:hover { border-color: var(--tea-green); background: rgba(48,48,48,0.9); }
+
+/* ── Rotary dial ─────────────────────────────────────────────────────────── */
+#dial-wrap {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+  user-select: none;
+}
+#dial {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(194,211,169,0.4);
+  background: radial-gradient(circle at 40% 35%, rgba(80,80,80,0.9), rgba(30,30,30,0.95));
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5), inset 0 1px 1px rgba(255,255,255,0.08);
+  position: relative;
+  cursor: grab;
+  touch-action: none;
+}
+#dial:active { cursor: grabbing; }
+#dial-knob {
+  position: absolute;
+  top: 8px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--tea-green);
+  box-shadow: 0 0 6px var(--tea-green);
+  transition: transform 0.05s linear;
+  transform-origin: 3px 28px;   /* pivot at dial centre */
+}
+#dial-label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--tea-green);
+  opacity: 0.8;
+}
+
+/* ── Ground prompt ───────────────────────────────────────────────────────── */
+#ground-prompt {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(48,48,48,0.75);
+  border: 1px solid rgba(194,211,169,0.3);
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  color: var(--tea-green);
+  z-index: 20;
+  animation: float 2s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50%       { transform: translateX(-50%) translateY(-5px); }
+}
+
+/* ── Help modal ──────────────────────────────────────────────────────────── */
+#help-modal {
+  position: fixed; inset: 0;
+  background: rgba(30,30,30,0.88);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50;
+  padding: 24px;
+}
+.modal-inner {
+  background: var(--graphite);
+  border: 1px solid rgba(194,211,169,0.25);
+  border-radius: 12px;
+  padding: 28px 24px;
+  max-width: 360px;
+  width: 100%;
+  position: relative;
+}
+.modal-inner h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tea-green);
+  margin-bottom: 16px;
+}
+.modal-inner p {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--cream);
+  opacity: 0.85;
+  margin-bottom: 12px;
+}
+.modal-inner p:last-child { margin-bottom: 0; }
+#help-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none;
+  border: none;
+  color: var(--cream);
+  opacity: 0.5;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+#help-close:hover { opacity: 1; }
+
+/* ── Utility ─────────────────────────────────────────────────────────────── */
+.hidden { display: none !important; }

@@ -1,0 +1,14 @@
+{
+  "name": "Tre Linee Temporali — Museo Marazzato",
+  "short_name": "Tre Linee",
+  "description": "Esperienza AR · Area 6 — Eroi su Ruote",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#303030",
+  "theme_color": "#303030",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
